@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/toast";
+
 
 // Brand icons (lucide removed brand icons, so we use small inline svgs)
 const GoogleIcon = () => (
@@ -27,6 +30,8 @@ const SignInPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const router = useRouter();
+
   // Email + password sign in
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,12 +41,20 @@ const SignInPage = () => {
     const result = await signIn.email({
       email: email,
       password: password,
+      callbackURL: "/",
     });
 
     setLoading(false);
 
     if (result.error) {
       setError("Wrong email or password. Please try again.");
+    } else {
+      toast.add({
+        title: "Success",
+        description: "Signed in successfully!",
+        type: "success",
+      });
+      router.push("/");
     }
   };
 

@@ -5,14 +5,28 @@ import Link from "next/link";
 import { Check, Eye, EyeOff, X } from "lucide-react";
 import { signIn, signUp } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
+import { useRouter } from "next/navigation";
 
 // Brand icons (lucide removed brand icons, so we use small inline svgs)
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4">
-    <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
-    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z" />
-    <path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z" />
-    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z" />
+    <path
+      fill="#4285F4"
+      d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"
+    />
   </svg>
 );
 
@@ -27,9 +41,12 @@ const SignUpPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [image, setImage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
 
   // Password rules for the live checklist
   const passwordChecks = [
@@ -63,6 +80,22 @@ const SignUpPage = () => {
     e.preventDefault();
     setError("");
 
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const data = {
+      name: String(formData.get("name") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      password: String(formData.get("password") || ""),
+      image: String(formData.get("image") || ""),
+    };
+
+    const result = await signUp.email({
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      image: data.image,
+      callbackURL: "/",
+    });
+
     // Check passwords match before sending
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -74,24 +107,31 @@ const SignUpPage = () => {
 
     if (!allChecksPassed) {
       setError(
-        "Password must be at least 8 characters and contain one uppercase letter, one lowercase letter, and one number."
+        "Password must be at least 8 characters and contain one uppercase letter, one lowercase letter, and one number.",
       );
       return;
     }
 
-    setLoading(true);
-
-    const result = await signUp.email({
-      name: name,
-      email: email,
-      password: password,
-    });
-
     setLoading(false);
 
+    //check if the account already created show error message and if not then show success message
     if (result.error) {
-      setError("Could not create account. Please try again.");
+      const errorMessage =
+        result.error.message || result.error.statusText || "Sign up failed.";
+      setError(errorMessage);
+      toast.add({
+        title: "Error",
+        description: errorMessage,
+        type: "destructive",
+      });
+    } else {
+      toast.add({
+        title: "Success",
+        description: "Account created successfully!",
+        type: "success",
+      });
     }
+    router.push("/");
   };
 
   // Google sign up
@@ -113,7 +153,6 @@ const SignUpPage = () => {
   return (
     <div className="min-h-screen bg-[#0d1526] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md bg-[#f5f4ef] rounded-2xl p-8">
-
         {/* Logo */}
         <div className="flex justify-center">
           <div className="w-14 h-14 rounded-full bg-[#4a3f8f] ring-2 ring-white/10 flex items-center justify-center text-2xl">
@@ -163,6 +202,7 @@ const SignUpPage = () => {
             </label>
             <input
               type="text"
+              name="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
@@ -176,6 +216,7 @@ const SignUpPage = () => {
             </label>
             <input
               type="email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -190,6 +231,7 @@ const SignUpPage = () => {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
+                name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -202,7 +244,11 @@ const SignUpPage = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1e2a4f]"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
 
@@ -210,16 +256,26 @@ const SignUpPage = () => {
             {password.length > 0 && (
               <div className="mt-2">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-400">Password strength</span>
+                  <span className="text-xs text-gray-400">
+                    Password strength
+                  </span>
                   <span className={`text-xs font-bold ${strengthTextColor}`}>
                     {strengthLabel}
                   </span>
                 </div>
                 <div className="flex gap-1">
-                  <div className={`h-1 flex-1 rounded-full ${passedCount >= 1 ? strengthBarColor : "bg-gray-200"}`}></div>
-                  <div className={`h-1 flex-1 rounded-full ${passedCount >= 2 ? strengthBarColor : "bg-gray-200"}`}></div>
-                  <div className={`h-1 flex-1 rounded-full ${passedCount >= 3 ? strengthBarColor : "bg-gray-200"}`}></div>
-                  <div className={`h-1 flex-1 rounded-full ${passedCount >= 4 ? strengthBarColor : "bg-gray-200"}`}></div>
+                  <div
+                    className={`h-1 flex-1 rounded-full ${passedCount >= 1 ? strengthBarColor : "bg-gray-200"}`}
+                  ></div>
+                  <div
+                    className={`h-1 flex-1 rounded-full ${passedCount >= 2 ? strengthBarColor : "bg-gray-200"}`}
+                  ></div>
+                  <div
+                    className={`h-1 flex-1 rounded-full ${passedCount >= 3 ? strengthBarColor : "bg-gray-200"}`}
+                  ></div>
+                  <div
+                    className={`h-1 flex-1 rounded-full ${passedCount >= 4 ? strengthBarColor : "bg-gray-200"}`}
+                  ></div>
                 </div>
 
                 {/* Live rule checklist */}
@@ -261,15 +317,31 @@ const SignUpPage = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1e2a4f]"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
 
           {/* Error message */}
-          {error && (
-            <p className="text-sm text-red-600 text-center">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+          {/* Taking image url */}
+          <div>
+            <label className="text-sm font-medium text-[#1e2a4f] block mb-1">
+              Profile Image URL
+            </label>
+            <input
+              type="text"
+              name="image"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              placeholder="https://example.com/image.png"
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-[#1e2a4f] outline-none focus:border-[#ffc20e] focus:ring-2 focus:ring-[#ffc20e]/30"
+            />
+          </div>
 
           {/* Submit button */}
           <Button
@@ -284,7 +356,10 @@ const SignUpPage = () => {
         {/* Go to sign in */}
         <p className="text-sm text-gray-500 text-center mt-6">
           Already have an account?{" "}
-          <Link href="/signin" className="text-[#1e2a4f] font-semibold hover:text-[#ffc20e]">
+          <Link
+            href="/signin"
+            className="text-[#1e2a4f] font-semibold hover:text-[#ffc20e]"
+          >
             Sign In
           </Link>
         </p>
