@@ -17,8 +17,9 @@ import {
   ChevronDown,
   CalendarPlus,
   Wallet,
+  LogOut,
 } from "lucide-react";
-import { useSession } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 import Image from "next/image";
 
 type SubItem = {
@@ -72,8 +73,8 @@ const adminMenu: NavItem[] = [
 // User sidebar menu
 const userMenu: NavItem[] = [
   { name: "Dashboard", href: "/dashboard/user", icon: LayoutDashboard },
-  { name: "Book now", href: "/dashboard/user/book", icon: CalendarPlus },
-  { name: "My bookings", href: "/dashboard/user/bookings", icon: CalendarDays },
+  { name: "Book now", href: "/dashboard/user/book-now", icon: CalendarPlus },
+  { name: "My bookings", href: "/dashboard/user/my-bookings", icon: CalendarDays },
   { name: "Payments", href: "/dashboard/user/payments", icon: Wallet },
   { name: "Services", href: "/dashboard/user/services", icon: LayoutGrid },
   {
@@ -119,10 +120,10 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
       {/* Toggle button (sits on the right edge of the sidebar) */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed top-8 z-50 bg-[#0d1526] text-white p-2 rounded-lg shadow-lg"
+        className="fixed top-0 z-50 bg-[#0d1526] text-white p-2 rounded-lg shadow-lg"
         style={{ left: open ? "16rem" : "0rem" }}
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-4 h-4" />
       </button>
 
       {/* Sidebar */}
@@ -131,7 +132,7 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
           open ? "block" : "hidden"
         }`}
       >
-        <div className="p-4">
+        <div className="p-4 flex flex-col min-h-full">
           {/* Profile photo */}
           {user?.image ? (
             <Image
@@ -149,9 +150,12 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
 
           {/* Email and phone */}
           <div className="mt-3 space-y-1">
-            <p className="flex items-center gap-2 text-sm text-gray-200 break-all">
-              <Mail className="w-4 h-4 shrink-0" />
-              {user?.email}
+            <p className="flex flex-col items-center gap-2 text-sm text-gray-200 break-all">
+              {user?.name}
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 shrink-0" />
+                {user?.email}
+              </div>
             </p>
             {phone && (
               <p className="flex items-center gap-2 text-sm text-gray-200">
@@ -162,7 +166,7 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
           </div>
 
           {/* Menu items */}
-          <div className="mt-6 flex flex-col gap-1">
+          <div className="mt-6 flex flex-col gap-1 flex-1">
             {menu.map((item) => {
               // Item with submenu
               if (item.children) {
@@ -174,7 +178,9 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
                       className="w-full flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5"
                     >
                       <item.icon className="w-4 h-4 shrink-0" />
-                      <span className="flex-1 text-left truncate">{item.name}</span>
+                      <span className="flex-1 text-left truncate">
+                        {item.name}
+                      </span>
                       <ChevronDown
                         className={`w-4 h-4 transition-transform ${
                           isOpen ? "rotate-180" : ""
@@ -217,6 +223,15 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
               );
             })}
           </div>
+
+          {/* Sign out button pinned to the bottom */}
+          <button
+            onClick={() => authClient.signOut({ callbackURL: "/signin" })}
+            className="mt-auto w-full flex items-center justify-center gap-2 px-2 py-2 rounded-lg text-sm text-white bg-[#1e2a4f] hover:bg-[#ffc20e] transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
         </div>
       </div>
     </>
