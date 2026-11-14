@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { Check, Eye, EyeOff, X } from "lucide-react";
 import { signIn, signUp } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
@@ -28,6 +29,34 @@ const SignUpPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Password rules for the live checklist
+  const passwordChecks = [
+    { label: "At least 8 characters", ok: password.length >= 8 },
+    { label: "One uppercase letter (A-Z)", ok: /[A-Z]/.test(password) },
+    { label: "One lowercase letter (a-z)", ok: /[a-z]/.test(password) },
+    { label: "One number (0-9)", ok: /[0-9]/.test(password) },
+  ];
+
+  // How many rules are passing right now (0 to 4)
+  const passedCount = passwordChecks.filter((check) => check.ok).length;
+
+  // Strength text and color based on passed rules
+  const strengthLabel =
+    passedCount <= 1 ? "Weak" : passedCount <= 3 ? "Medium" : "Strong";
+  const strengthBarColor =
+    passedCount <= 1
+      ? "bg-red-500"
+      : passedCount <= 3
+        ? "bg-[#ffc20e]"
+        : "bg-green-500";
+  const strengthTextColor =
+    passedCount <= 1
+      ? "text-red-500"
+      : passedCount <= 3
+        ? "text-[#ffc20e]"
+        : "text-green-600";
 
   // Email + password sign up
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,15 +69,12 @@ const SignUpPage = () => {
       return;
     }
 
-    // Password must have one letter, one uppercase, one lowercase, one number
-    const hasLetter = /[a-zA-Z]/.test(password);
-    const hasUppercase = /[A-Z]/.test(password);
-    const hasLowercase = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
+    // Every password rule must pass
+    const allChecksPassed = passwordChecks.every((check) => check.ok);
 
-    if (!hasLetter || !hasUppercase || !hasLowercase || !hasNumber) {
+    if (!allChecksPassed) {
       setError(
-        "Password must contain at least one letter, one uppercase letter, one lowercase letter, and one number."
+        "Password must be at least 8 characters and contain one uppercase letter, one lowercase letter, and one number."
       );
       return;
     }
@@ -161,30 +187,83 @@ const SignUpPage = () => {
             <label className="text-sm font-medium text-[#1e2a4f] block mb-1">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-[#1e2a4f] outline-none focus:border-[#ffc20e] focus:ring-2 focus:ring-[#ffc20e]/30"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Must contain one letter, one uppercase, one lowercase, and one
-              number
-            </p>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm text-[#1e2a4f] outline-none focus:border-[#ffc20e] focus:ring-2 focus:ring-[#ffc20e]/30"
+              />
+
+              {/* Eye button to show/hide password */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1e2a4f]"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {/* Strength meter - only shows when typing */}
+            {password.length > 0 && (
+              <div className="mt-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-400">Password strength</span>
+                  <span className={`text-xs font-bold ${strengthTextColor}`}>
+                    {strengthLabel}
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  <div className={`h-1 flex-1 rounded-full ${passedCount >= 1 ? strengthBarColor : "bg-gray-200"}`}></div>
+                  <div className={`h-1 flex-1 rounded-full ${passedCount >= 2 ? strengthBarColor : "bg-gray-200"}`}></div>
+                  <div className={`h-1 flex-1 rounded-full ${passedCount >= 3 ? strengthBarColor : "bg-gray-200"}`}></div>
+                  <div className={`h-1 flex-1 rounded-full ${passedCount >= 4 ? strengthBarColor : "bg-gray-200"}`}></div>
+                </div>
+
+                {/* Live rule checklist */}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
+                  {passwordChecks.map((check) => (
+                    <div
+                      key={check.label}
+                      className={`flex items-center gap-1 text-xs ${
+                        check.ok ? "text-green-600" : "text-gray-400"
+                      }`}
+                    >
+                      {check.ok ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <X className="w-3 h-3" />
+                      )}
+                      <span>{check.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
             <label className="text-sm font-medium text-[#1e2a4f] block mb-1">
               Confirm Password
             </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-[#1e2a4f] outline-none focus:border-[#ffc20e] focus:ring-2 focus:ring-[#ffc20e]/30"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm text-[#1e2a4f] outline-none focus:border-[#ffc20e] focus:ring-2 focus:ring-[#ffc20e]/30"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1e2a4f]"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {/* Error message */}
