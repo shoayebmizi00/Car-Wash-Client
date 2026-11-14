@@ -42,14 +42,14 @@ const Header = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
-                render={<Link href="/sign-in" />}
+                render={<Link href="/signin" />}
                 className="cursor-pointer"
               >
                 <LogIn />
                 Sign In
               </DropdownMenuItem>
               <DropdownMenuItem
-                render={<Link href="/sign-up" />}
+                render={<Link href="/signup" />}
                 className="cursor-pointer"
               >
                 <UserPlus />
