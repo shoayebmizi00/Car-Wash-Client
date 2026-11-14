@@ -28,7 +28,7 @@ const Navbar = () => {
 
   return (
     <div className="bg-[#f5f4ef]">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <div className="container mx-auto flex items-center justify-between px-4 py-3">
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-8">
