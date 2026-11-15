@@ -22,9 +22,9 @@ const DashboardPage = () => {
     const role = (session.user as { role?: string }).role;
 
     if (role === "admin") {
-      router.replace("/dashboard/admin");
+      router.replace("/admin");
     } else {
-      router.replace("/dashboard/user");
+      router.replace("/user");
     }
   }, [isPending, session, router]);
 

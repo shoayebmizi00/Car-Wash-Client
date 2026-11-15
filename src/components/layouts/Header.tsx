@@ -59,7 +59,7 @@ const Header = () => {
                     width={32}
                     height={32}
                   />
-                  <p className="text-white/90 text-sm ml-2 hidden sm:inline">{user.name}</p>
+                  <div className="text-white/90 text-sm ml-2 hidden sm:inline">{user.name}</div>
                 </div>
               ) : (
                 <User className="w-5 h-5" />
@@ -100,7 +100,15 @@ const Header = () => {
                 </div>
 
                 <DropdownMenuItem
-                  render={<Link href="/dashboard" />}
+                  render={
+                    <Link
+                      href={
+                        (user as { role?: string }).role === "admin"
+                          ? "/admin/dashboard"
+                          : "/user/dashboard"
+                      }
+                    />
+                  }
                   className="cursor-pointer mt-1"
                 >
                   <LayoutDashboard />

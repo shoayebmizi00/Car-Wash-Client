@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -20,7 +21,6 @@ import {
   LogOut,
 } from "lucide-react";
 import { authClient, useSession } from "@/lib/auth-client";
-import Image from "next/image";
 
 type SubItem = {
   name: string;
@@ -36,63 +36,51 @@ type NavItem = {
 
 // Admin sidebar menu (same as the design)
 const adminMenu: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
-  { name: "Services", href: "/dashboard/admin/services", icon: LayoutGrid },
-  { name: "Slots", href: "/dashboard/admin/slots", icon: Calendar },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Services", href: "/admin/services", icon: LayoutGrid },
+  { name: "Slots", href: "/admin/slots", icon: Calendar },
   {
     name: "User management",
     icon: Users,
     children: [
-      { name: "All users", href: "/dashboard/admin/users" },
-      { name: "Add new user", href: "/dashboard/admin/users/new" },
+      { name: "All users", href: "/admin/users" },
+      { name: "Add new user", href: "/admin/users/new" },
     ],
   },
   {
     name: "Booking",
     icon: CalendarDays,
     children: [
-      { name: "All bookings", href: "/dashboard/admin/bookings" },
-      { name: "Create booking", href: "/dashboard/admin/bookings/new" },
+      { name: "All bookings", href: "/admin/bookings" },
+      { name: "Create booking", href: "/admin/bookings/new" },
     ],
   },
-  {
-    name: "Profile",
-    icon: User,
-    children: [
-      { name: "View profile", href: "/dashboard/admin/profile" },
-      { name: "Change password", href: "/dashboard/admin/profile/password" },
-    ],
-  },
-  {
-    name: "Notice",
-    icon: Megaphone,
-    children: [{ name: "All notices", href: "/dashboard/admin/notices" }],
-  },
+  { name: "Profile", href: "/admin/profile", icon: User },
+  { name: "Notice", href: "/admin/notices", icon: Megaphone },
 ];
 
 // User sidebar menu
 const userMenu: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard/user", icon: LayoutDashboard },
-  { name: "Book now", href: "/dashboard/user/book-now", icon: CalendarPlus },
-  { name: "My bookings", href: "/dashboard/user/my-bookings", icon: CalendarDays },
-  { name: "Payments", href: "/dashboard/user/payments", icon: Wallet },
-  { name: "Services", href: "/dashboard/user/services", icon: LayoutGrid },
-  {
-    name: "Profile",
-    icon: User,
-    children: [
-      { name: "View profile", href: "/dashboard/user/profile" },
-      { name: "Change password", href: "/dashboard/user/profile/password" },
-    ],
-  },
-  {
-    name: "Notice",
-    icon: Megaphone,
-    children: [{ name: "All notices", href: "/dashboard/user/notices" }],
-  },
+  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
+  { name: "Book now", href: "/user/book-now", icon: CalendarPlus },
+  { name: "My bookings", href: "/user/my-bookings", icon: CalendarDays },
+  { name: "Payments", href: "/user/payments", icon: Wallet },
+  { name: "Services", href: "/user/services", icon: LayoutGrid },
+  { name: "Profile", href: "/user/profile", icon: User },
+  { name: "Notice", href: "/user/notices", icon: Megaphone },
 ];
 
-const Sidebar = ({ role }: { role: "admin" | "user" }) => {
+// Open/close state comes from the dashboard layout, so page content
+// can react to it too
+const Sidebar = ({
+  role,
+  open,
+  onToggle,
+}: {
+  role: "admin" | "user";
+  open: boolean;
+  onToggle: () => void;
+}) => {
   const { data: session } = useSession();
   const user = session?.user;
 
@@ -100,7 +88,6 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
   const phone = (user as { phone?: string } | undefined)?.phone;
 
   const pathname = usePathname();
-  const [open, setOpen] = useState(true);
   const [openSection, setOpenSection] = useState("");
 
   // Pick the right menu for the role
@@ -119,16 +106,28 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
     <>
       {/* Toggle button (sits on the right edge of the sidebar) */}
       <button
-        onClick={() => setOpen(!open)}
-        className="fixed top-0 z-50 bg-[#0d1526] text-white p-2 rounded-lg shadow-lg"
-        style={{ left: open ? "16rem" : "0rem" }}
+        onClick={onToggle}
+        className={`fixed top-8 z-50 bg-[#0d1526] text-white p-2 rounded-lg shadow-lg ${
+          open ? "block" : "hidden"
+        }`}
+        style={{ left: "16rem" }}
       >
-        <Menu className="w-4 h-4" />
+        <Menu className="w-5 h-5" />
+      </button>
+
+      {/* Reopen button (shows when sidebar is closed) */}
+      <button
+        onClick={onToggle}
+        className={`fixed top-8 left-0 z-50 bg-[#0d1526] text-white p-2 rounded-lg shadow-lg ${
+          open ? "hidden" : "block"
+        }`}
+      >
+        <Menu className="w-5 h-5" />
       </button>
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 w-64 bg-[#0d1526] text-white z-40 overflow-y-auto transition-all duration-200 ${
+        className={`fixed inset-y-0 left-0 w-64 bg-[#0d1526] text-white z-40 overflow-y-auto ${
           open ? "block" : "hidden"
         }`}
       >
@@ -150,18 +149,18 @@ const Sidebar = ({ role }: { role: "admin" | "user" }) => {
 
           {/* Email and phone */}
           <div className="mt-3 space-y-1">
-            <p className="flex flex-col items-center gap-2 text-sm text-gray-200 break-all">
+            <div className="flex flex-col items-center gap-2 text-sm text-gray-200 break-all">
               {user?.name}
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 shrink-0" />
                 {user?.email}
               </div>
-            </p>
+            </div>
             {phone && (
-              <p className="flex items-center gap-2 text-sm text-gray-200">
+              <div className="flex items-center gap-2 text-sm text-gray-200">
                 <Phone className="w-4 h-4 shrink-0" />
                 {phone}
-              </p>
+              </div>
             )}
           </div>
 
